@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title dummy ERC20 token contract
- * @author 
+ * @author
  * @notice initializing and minting tokens to dummy erc20 contract
  */
 contract ERC20Contract is ERC20 {

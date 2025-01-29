@@ -16,8 +16,8 @@ contract BingoTest is Test {
     function setUp() public {
         bingo = new Bingo();
         bingoOwner = address(this);
-        erc20Contract = new ERC20Contract(10000);    // 10000 initial supply
-        
+        erc20Contract = new ERC20Contract(10000); // 10000 initial supply
+
         dummy1 = address(1);
         dummy2 = address(2);
     }
@@ -25,7 +25,7 @@ contract BingoTest is Test {
     function test_startGame() public {
         uint8 gameId = bingo.startGame();
         assertEq(gameId, 1);
-        
+
         assertEq(bingo._joinDuration(), 1);
         assertEq(bingo._turnDuration(), 1);
         assertEq(bingo.availableGames(0), 1);
@@ -56,7 +56,7 @@ contract BingoTest is Test {
 
         vm.stopPrank();
 
-        for (uint i = 0; i < 1000; ++i) {
+        for (uint256 i = 0; i < 1000; ++i) {
             bingo.drawRandomNumber(gameId);
             uint8 drawnNumber = bingo.getDrawnNumber(gameId);
 
@@ -84,7 +84,7 @@ contract BingoTest is Test {
 
         vm.stopPrank();
 
-        for (uint i = 0; i < 50; ) {
+        for (uint256 i = 0; i < 50;) {
             bingo.drawRandomNumber(gameId);
 
             unchecked {

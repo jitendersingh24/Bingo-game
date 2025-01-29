@@ -38,7 +38,7 @@ contract Bingo is IBingo {
     constructor() {
         owner = msg.sender;
     }
-    
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Permission denied: Only owner can perform this operation!");
         _;
@@ -58,7 +58,7 @@ contract Bingo is IBingo {
      * @notice provides array of available games
      * @dev returns available games array
      */
-    function getAvailableGames() external view returns(uint8[] memory) {
+    function getAvailableGames() external view returns (uint8[] memory) {
         uint8[] memory games = new uint8[](availableGames.length);
         games = availableGames;
         return games;
@@ -68,12 +68,12 @@ contract Bingo is IBingo {
      * @notice make a new game session
      * @dev initializes all game states required for a new game
      */
-    function startGame() external onlyOwner returns(uint8) {
+    function startGame() external onlyOwner returns (uint8) {
         uint8 gameId = _getNextGameId();
         gameInfo[gameId].joinDuration = _joinDuration;
         gameInfo[gameId].turnDuration = _turnDuration;
         availableGames.push(gameId);
-        
+
         return gameId;
     }
 
@@ -96,7 +96,10 @@ contract Bingo is IBingo {
      * @param erc20Contract ERC20 token contract address
      */
     function claimReward(uint8 gameId, address erc20Contract) external {
-        require(_checkGameStateWithBitMaskingToClaimReward(gameId, msg.sender), "Game state is not winnable: Can't claim reward!");
+        require(
+            _checkGameStateWithBitMaskingToClaimReward(gameId, msg.sender),
+            "Game state is not winnable: Can't claim reward!"
+        );
         _transferWinnersAmount(msg.sender, erc20Contract, gameId);
     }
 
@@ -106,14 +109,14 @@ contract Bingo is IBingo {
      * @param randomNumber random number to be crossed in bingo
      */
     function cutNumber(uint8 gameId, uint8 randomNumber) external {
-        (uint8[5][5] memory playerMatrix, ) = _getPlayerAndMarkedMatrix(gameId, msg.sender);
+        (uint8[5][5] memory playerMatrix,) = _getPlayerAndMarkedMatrix(gameId, msg.sender);
         uint256 markedMatrixSlot = uint256(keccak256(abi.encode(msg.sender, keccak256(abi.encode(gameId, uint256(1))))));
         bytes32 value;
 
-        for (uint8 i = 0; i < 5; ) {
-            for (uint8 j = 0; j < 5; ) {
+        for (uint8 i = 0; i < 5;) {
+            for (uint8 j = 0; j < 5;) {
                 uint8 shiftLength = (i * 8 * 5) + (j * 8);
-                
+
                 if (playerMatrix[i][j] == randomNumber) {
                     assembly {
                         value := or(shl(shiftLength, 1), sload(markedMatrixSlot))
@@ -136,7 +139,7 @@ contract Bingo is IBingo {
      * @dev drawing random number
      * @param gameId ID of the game
      */
-    function drawRandomNumber(uint8 gameId) external onlyOwner{
+    function drawRandomNumber(uint8 gameId) external onlyOwner {
         drawnNumbers[gameId].push(_getNextRandomNumber());
     }
 
@@ -144,15 +147,14 @@ contract Bingo is IBingo {
      * @dev get recently drawn number
      * @param gameId ID of the game
      */
-    function getDrawnNumber(uint8 gameId) external view returns(uint8) {
+    function getDrawnNumber(uint8 gameId) external view returns (uint8) {
         return drawnNumbers[gameId][drawnNumbers[gameId].length - 1];
     }
-
 
     /**
      * @dev updates and returns next game ID
      */
-    function _getNextGameId() internal returns(uint8) {
+    function _getNextGameId() internal returns (uint8) {
         ++nextGameId;
         return nextGameId;
     }
@@ -160,7 +162,7 @@ contract Bingo is IBingo {
     /**
      * @dev provides next random number drawn
      */
-    function _getNextRandomNumber() internal returns(uint8) {
+    function _getNextRandomNumber() internal returns (uint8) {
         uint8 randomNumber = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), salt))) % 256);
         ++salt;
         return randomNumber;
@@ -171,11 +173,11 @@ contract Bingo is IBingo {
      * @param gameId ID of the game
      * @param gamer address of the player
      */
-    function _generateRandomBingoWithBitMasking(uint8 gameId, address gamer) internal returns(bytes32 byteValue) {
+    function _generateRandomBingoWithBitMasking(uint8 gameId, address gamer) internal returns (bytes32 byteValue) {
         bytes32 value;
         uint256 slot = uint256(keccak256(abi.encode(gamer, keccak256(abi.encode(gameId, uint256(0))))));
 
-        for (uint8 i = 0; i < 25; ) {
+        for (uint8 i = 0; i < 25;) {
             uint8 randomNumber = _getNextRandomNumber();
             uint8 byteLength = i * 8;
 
@@ -198,12 +200,12 @@ contract Bingo is IBingo {
      * @param gameId ID of the game
      * @param gamer address of the player
      */
-    function _generateDrawnStateBingoWithBitMasking(uint8 gameId, address gamer) internal returns(bytes32) {
+    function _generateDrawnStateBingoWithBitMasking(uint8 gameId, address gamer) internal returns (bytes32) {
         bytes32 value;
         uint8 boolValue = 0;
         uint256 slot = uint256(keccak256(abi.encode(gamer, keccak256(abi.encode(gameId, uint256(1))))));
 
-        for (uint8 i = 0; i < 25; ) {
+        for (uint8 i = 0; i < 25;) {
             uint8 byteLength = i * 8;
 
             if (i == 12) {
@@ -214,7 +216,7 @@ contract Bingo is IBingo {
 
             assembly {
                 value := sload(slot)
-                value := or(shl(byteLength, boolValue), value) 
+                value := or(shl(byteLength, boolValue), value)
                 sstore(slot, value)
             }
 
@@ -233,7 +235,11 @@ contract Bingo is IBingo {
      * @return playerMatrix matrix provided to the player
      * @return drawnMatrix matrix updated by the player
      */
-    function _getPlayerAndMarkedMatrix(uint8 gameId, address gamer) internal view returns(uint8[5][5] memory, bool[5][5] memory) {
+    function _getPlayerAndMarkedMatrix(uint8 gameId, address gamer)
+        internal
+        view
+        returns (uint8[5][5] memory, bool[5][5] memory)
+    {
         uint256 gameStateSlot = uint256(keccak256(abi.encode(gamer, keccak256(abi.encode(gameId, uint256(0))))));
         uint256 drawnStateSlot = uint256(keccak256(abi.encode(gamer, keccak256(abi.encode(gameId, uint256(1))))));
         bytes32 gameStateMaskedValue;
@@ -246,8 +252,8 @@ contract Bingo is IBingo {
 
         uint8[5][5] memory playerMatrix;
         bool[5][5] memory drawnMatrix;
-        for (uint8 i = 0; i < 5; ) {
-            for (uint8 j = 0; j < 5; ) {
+        for (uint8 i = 0; i < 5;) {
+            for (uint8 j = 0; j < 5;) {
                 uint8 stateNumber;
                 uint8 drawnFlag;
                 uint8 shiftLength = (i * 8 * 5) + (j * 8);
@@ -288,7 +294,7 @@ contract Bingo is IBingo {
      * @param gameId ID of the game
      * @param gamer address of the gamer
      */
-    function _checkGameStateWithBitMaskingToClaimReward(uint8 gameId, address gamer) private view returns(bool) {
+    function _checkGameStateWithBitMaskingToClaimReward(uint8 gameId, address gamer) private view returns (bool) {
         (uint8[5][5] memory playerMatrix, bool[5][5] memory markedMatrix) = _getPlayerAndMarkedMatrix(gameId, gamer);
         uint8[] memory drawnNumbersArray = drawnNumbers[gameId];
         uint8 totalLinesCrossed = 0;
@@ -307,7 +313,7 @@ contract Bingo is IBingo {
                             flag = true;
                         }
                     }
-                    
+
                     require(flag, "Faulty matrix provided!");
                 } else {
                     isRowCrossed = false;
